@@ -11,19 +11,16 @@ class TextboardSpec
     with OneBrowserPerSuite
     with HtmlUnitFactory {
 
-  import org.openqa.selenium.htmlunit.HtmlUnitDriver
-
-  override def createWebDriver() = {
-    val driver = new HtmlUnitDriver {
-      def setAcceptLanguage(lang: String) =
-        this.getWebClient().addRequestHeader("Accept-Language", lang)
-    }
-    driver.setAcceptLanguage("en")
-    driver
-  }
+  override def fakeApplication() =
+    new GuiceApplicationBuilder()
+      .configure(
+        "db.default.driver" -> "org.h2.Driver",
+        "db.default.url" -> "jdbc:h2:mem:play"
+      )
+      .build()
 
   "GET /" should {
-    "does not print any messages if there are no posts" in {
+    "not print any messages if there are no posts" in {
       go to s"http://localhost:$port/"
       assert(pageTitle === "Scala Text Textboard")
       assert(findAll(className("post-body")).length === 0)
@@ -48,16 +45,7 @@ class TextboardSpec
   }
 
   "POST /" should {
-    "print messages that was posted by others" in {
-      go to s"http://localhost:$port/"
-
-      eventually {
-        val posts = findAll(className("post-body")).toSeq
-        assert(posts.length === 1)
-      }
-    }
-
-    "cannot post an empty message" in {
+    "not post an empty message" in {
       val body = ""
 
       go to s"http://localhost:$port/"
@@ -71,7 +59,7 @@ class TextboardSpec
       }
     }
 
-    "cannot post a too long message" in {
+    "not post a too long message" in {
       val body = "too long messages"
 
       go to s"http://localhost:$port/"
